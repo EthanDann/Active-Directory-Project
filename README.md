@@ -4,9 +4,9 @@ The goal of this project is to gain hands-on experience with a SIEM in an Active
 
 ## Components Used
 
-- **Active Directory**: Microsoft;s Active Directory is utilized as the directory service and identity management solution. It centralizes authentication, authorization, and configuration management for users, computers, and resources in a network environment.
+- **Active Directory**: Microsoft;s Active Directory is utilized as the directory service and identity management solution.
 
-- **Splunk**: Splunk is used as the SIEM (Security Information and Event Management) and XDR (Extended Detection and Response) platform. It provides real-time monitoring, threat detection, and response capabilities for security incidents.
+- **Splunk**: Splunk is used as the SIEM (Security Information and Event Management) and XDR (Extended Detection and Response) platform.
 
 ## Documentation
 
