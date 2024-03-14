@@ -29,3 +29,7 @@ sudo apt-get update && sudo apt-get upgrade
 ## Kali Linux
 
 - Installed Kali Linux on a VM using VirtualBox from the Kali Linux official website
+
+## Work In Progress
+
+- This project is still a work in progress! I will be documenting it as I go
