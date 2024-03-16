@@ -57,7 +57,6 @@ sudo dpkg -i <splunk install file name>
 ```bash
 sudo ./splunk enable boot-start -user splunk
 ```
-- Installed the splunk universal forwarder package from the share directory and started it using port 9997
 
 ## Windows 10 Target Machine
 
@@ -101,7 +100,12 @@ source = XmlWinEventLog:Microsoft-Windows-Sysmon/Operational
 ``` 
 - Changed the SplunkForwarder service to login as the system account in the Services application and restarted the service
 - Went to the splunk:8000 web ui and created an index named 'endpoint' per the inputs.conf file
-- Added a new receiving port of 9997 on the splunk web ui to receive data 
+- Added a new receiving port of 9997 on the splunk web ui to receive data
+### Troubleshooting
+- Checked to see if any data was being received on the 'endpoint' indexer
+  - Verified all configuration files were correct
+  - Created an outbound rule on the firewall to allow connections through port 9997
+  - Splunk Web was now receiving data on the 'endpoint' indexer    
 
 ## Kali Linux
 
