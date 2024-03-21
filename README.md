@@ -102,7 +102,7 @@ source = XmlWinEventLog:Microsoft-Windows-Sysmon/Operational
 - Went to the splunk:8000 web ui and created an index named 'endpoint' per the inputs.conf file
 - Added a new receiving port of 9997 on the splunk web ui to receive data
 
-### Troubleshooting
+### Troubleshooting Splunk Forwarder
 
 - Checked to see if any data was being received on the 'endpoint' indexer
   - Verified all configuration files were correct
