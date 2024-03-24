@@ -174,6 +174,30 @@ source = XmlWinEventLog:Microsoft-Windows-Sysmon/Operational
 ## Kali Linux
 
 - Installed Kali Linux on a VM using VirtualBox from the Kali Linux official website
+- Changed IP address to 192.168.10.250 based on the network diagram
+- Installed a tool called "Crowbar" by typing:
+```bash
+sudo apt-get install -y crowbar
+```
+- Created a new directory called 'ad-project'
+- Unzipped the 'rockyou.txt.gz' wordlist and copied it to the 'ad-project' directory
+- For purposes of the demo, copied only the first 20 lines of rockyou.txt onto a new txt file called 'passwords.txt' in the ad-project directory
+```bash
+head -n 20 rockyou.txt > passwords.txt
+```
+- Also added in the actual password of the user being targeted on the Windows 10 machine, for purposes of the demo
+- Then went to the Windows 10 target machine, enabled RDP and added both of the users that were created in Active Directory
+- On the kali linux terminal, started a brute force attack via 'crowbar' by typing:
+```bash
+crowbar -b rdp -u tsmith -C passwords.txt -s 192.168.10.100/32
+```
+- This specifies to use rdp as the targets service, the username being tsmith, the wordlist being passwords.txt, and the target IP address as 192.168.10.100/32 (/32 to indicate a single target IP address)
+  - Since the actual password was added to the txt file, the attack was successful
+- To check the event in splunk, went over to the Splunk web interface and checked for events tying to 'tsmith'
+  - "index='endpoint' tsmith"
+  - A number of events show up, including 20 for event code 4625, which indicates the account failed to log on 20 times
+  - All events with event code 4625 happened at the exact same time
+  - Can also see the source network address as the kali linux machine that initiated the attack
 
 ## Work In Progress
 
