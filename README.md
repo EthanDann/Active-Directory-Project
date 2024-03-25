@@ -11,11 +11,66 @@ The goal of this project is to gain hands-on experience with a SIEM in an Active
 
 ![Project Logical Diagram](https://github.com/EthanDann/Active-Directory-Project/blob/main/Active_Directory_Project.drawio.png?raw=true)
 
-## Active Directory
+## Windows 10 Server (Active Directory)
 
 - Installed Windows Server 2022 on a VM using VirtualBox
   - Configured with 4gb of memory, 1 vcpu, and 50 gb of storage
-- Configured to use NAT network on VirtualBox 
+- Configured to use NAT network on VirtualBox
+- Changed PC name to 'ADDC01' in settings
+- Changed IP address to '192.168.10.7', default gateway to '192.168.10.1', and DNS server to '8.8.8.8'
+
+### Installing Splunk Universal Forwarder and Sysmon
+
+- Installed Splunk Universal Forwarder and set the receiving index to the Splunk Server (192.168.10.10) on port 9997
+- Installed sysmon with the config file from 'olaf' by downloading both files and running this on PowerShell:
+```bash
+cd C:<symon install path>
+.\Symon64.exe -i ..\sysmonconfig.xml
+```
+- Created a file named 'inputs.conf' and inputted the following information to ensure data was being sent to the correct places:
+```bash
+[WinEventLog://Application]
+
+index = endpoint
+
+disabled = false
+
+[WinEventLog://Security]
+
+index = endpoint
+
+disabled = false
+
+[WinEventLog://System]
+
+index = endpoint
+
+disabled = false
+
+[WinEventLog://Microsoft-Windows-Sysmon/Operational]
+
+index = endpoint
+
+disabled = false
+
+renderXml = true
+
+source = XmlWinEventLog:Microsoft-Windows-Sysmon/Operational
+``` 
+- Changed the SplunkForwarder service to login as the system account in the Services application and restarted the service
+- Went to the splunk:8000 web ui and created an index named 'endpoint' per the inputs.conf file
+- Added a new receiving port of 9997 on the splunk web ui to receive data
+- Verified that Splunk Web was now receiving data on the 'endpoint' indexer
+
+### Adding Active Directory
+
+- Went to Server Manager and added Active Directory Domain Services
+- Promoted server to a domain controller
+  - Added a new forest with a root domain name '{rootDomain}.local
+  - Created a password
+  - Installed configuration and restarted the server
+  - Went to Server Manager and aded new organizational units 'IT' and 'HR' within the domain
+  - Added a user into each OU 
 
 ## Splunk Server
 
@@ -62,6 +117,9 @@ sudo ./splunk enable boot-start -user splunk
 
 - Changed pc name to 'target-PC' in settings
 - Changed IP address to '192.168.10.100', default gateway to '192.168.10.1', and DNS server to '8.8.8.8'
+
+### Installing Splunk Universal Forwarder and Sysmon
+
 - Installed Splunk Universal Forwarder and set the receiving index to the Splunk Server (192.168.10.10) on port 9997
 - Installed sysmon with the config file from 'olaf' by downloading both files and running this on PowerShell:
 ```bash
@@ -108,8 +166,24 @@ source = XmlWinEventLog:Microsoft-Windows-Sysmon/Operational
   - Verified all configuration files were correct
   - Created an outbound rule on the firewall to allow connections through port 9997
   - Splunk Web was now receiving data on the 'endpoint' indexer
+
+### Crowbar and Atomic Red Team
+
+- Enabled RDP and added both of the users that were created in Active Directory
+  - This is for a later step using 'crowbar' in Kali Linux
+- In order for Atomic Red Team to work, added an exclusion on Microsoft Defender Antivirus for the C:\ drive
+- To install Atomic Red Team, inputted the following in Powershell as Administrator:
+```bash
+IEX (IWR 'https://raw.githubusercontent.com/redcanaryco/invoke-atomicredteam/master/install-atomicredteam.ps1' -UseBasicParsing);
+Install-AtomicRedTeam -getAtomics
+```
+- Then, created a local account using Atomic Red Team associated with the MITRE ATT&CK id 'T1136.001'
+  - This created a user called 'NewLocalUser'
+- Went to the Splunk Web UI to see if an event showed up for 'NewLocalUser', and after waiting a few minutes a few events showed up
+- Ran another technique using Atomic Red Team with the id 'T1059.001' to execute a PowerShell command
+- This also showed up in the Splunk Web UI
  
-### Active Directory
+### Adding PC to Active Directory Domain
 
 - Added PC to the active directory domain '{domainName}.local', but could not communicate with the Active Directory Server
   - Changed the DNS server to point to the Active Directory Server IP address
@@ -117,64 +191,13 @@ source = XmlWinEventLog:Microsoft-Windows-Sysmon/Operational
   - Restarted PC
 - Logged in as the HR user to ensure everything was working properly
  
-## Windows Server (Active Directory)
-
-- Changed pc name to 'ADDC01' in settings
-- Changed IP address to '192.168.10.7', default gateway to '192.168.10.1', and DNS server to '8.8.8.8'
-- Installed Splunk Universal Forwarder and set the receiving index to the Splunk Server (192.168.10.10) on port 9997
-- Installed sysmon with the config file from 'olaf' by downloading both files and running this on PowerShell:
-```bash
-cd C:<symon install path>
-.\Symon64.exe -i ..\sysmonconfig.xml
-```
-- Created a file named 'inputs.conf' and inputted the following information to ensure data was being sent to the correct places:
-```bash
-[WinEventLog://Application]
-
-index = endpoint
-
-disabled = false
-
-[WinEventLog://Security]
-
-index = endpoint
-
-disabled = false
-
-[WinEventLog://System]
-
-index = endpoint
-
-disabled = false
-
-[WinEventLog://Microsoft-Windows-Sysmon/Operational]
-
-index = endpoint
-
-disabled = false
-
-renderXml = true
-
-source = XmlWinEventLog:Microsoft-Windows-Sysmon/Operational
-``` 
-- Changed the SplunkForwarder service to login as the system account in the Services application and restarted the service
-- Went to the splunk:8000 web ui and created an index named 'endpoint' per the inputs.conf file
-- Added a new receiving port of 9997 on the splunk web ui to receive data
-- Verified that Splunk Web was now receiving data on the 'endpoint' indexer
-
-### Add Active Directory
-
-- Went to Server Manager and added Active Directory Domain Services
-- Promoted server to a domain controller
-  - Added a new forest with a root domain name '{rootDomain}.local
-  - Created a password
-  - Installed configuration and restarted the server
-  - Went to Server Manager and aded new organizational units 'IT' and 'HR' within the domain
-  - Added a user into each OU
 ## Kali Linux
 
 - Installed Kali Linux on a VM using VirtualBox from the Kali Linux official website
 - Changed IP address to 192.168.10.250 based on the network diagram
+
+### Installing and utilizing Crowbar
+
 - Installed a tool called "Crowbar" by typing:
 ```bash
 sudo apt-get install -y crowbar
@@ -186,7 +209,6 @@ sudo apt-get install -y crowbar
 head -n 20 rockyou.txt > passwords.txt
 ```
 - Also added in the actual password of the user being targeted on the Windows 10 machine, for purposes of the demo
-- Then went to the Windows 10 target machine, enabled RDP and added both of the users that were created in Active Directory
 - On the kali linux terminal, started a brute force attack via 'crowbar' by typing:
 ```bash
 crowbar -b rdp -u tsmith -C passwords.txt -s 192.168.10.100/32
@@ -198,7 +220,3 @@ crowbar -b rdp -u tsmith -C passwords.txt -s 192.168.10.100/32
   - A number of events show up, including 20 for event code 4625, which indicates the account failed to log on 20 times
   - All events with event code 4625 happened at the exact same time
   - Can also see the source network address as the kali linux machine that initiated the attack
-
-## Work In Progress
-
-- This project is still a work in progress! I will be documenting it as I go
