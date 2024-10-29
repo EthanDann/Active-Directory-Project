@@ -9,7 +9,7 @@ The goal of this project is to gain hands-on experience with a SIEM in an Active
 
 ## Project Logical Diagram
 
-![Project Logical Diagram](https://github.com/EthanDann/Active-Directory-Project/blob/main/Active_Directory_Project.drawio.png?raw=true)
+![Project Logical Diagram](Active%20Directory%20Project%20Logical%20Diagram.jpg)
 
 ## Windows 10 Server (Active Directory)
 
