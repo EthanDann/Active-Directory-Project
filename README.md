@@ -19,7 +19,7 @@ The goal of this project is to gain hands-on experience with a SIEM in an Active
 - Change PC name to 'ADDC01' in settings
 - Change IP address to '192.168.10.7', default gateway to '192.168.10.1', and DNS server to '8.8.8.8'
 
-### Installing Splunk Universal Forwarder and Sysmon
+### Installing Splunk Universal Forwarder and Sysmon on Windows 10 Server
 
 - Install Splunk Universal Forwarder and set the receiving index to the Splunk Server (192.168.10.10) on port 9997
 - Install sysmon with the config file from 'olaf' on Github by downloading both files and running this on PowerShell:
@@ -83,6 +83,17 @@ sudo apt-get update && sudo apt-get upgrade
 
 - Configure to use NAT network on VirtualBox
 - Configure to use a static IP address of '192.168.10.10/24', the DNS server as Google's (8.8.8.8), and set it to route to the gateway (192.168.10.1)
+  - Go to `/etc/netplan/00-installer-config.yaml` file and edit it with the following:
+    ```bash
+    dhcp4: no
+    addresses: [192.168.10.10/24]
+    nameservers:
+        addresses: [8.8.8.8]
+    routes:
+        - to: default
+          via: 192.168.10.1
+    ```
+- Ping 8.8.8.8 to test connectivity
 - Sign up for a Splunk account and download the splunk debian file
 - Install virtualbox guest additions by running:
 ```bash
@@ -93,32 +104,46 @@ sudo apt-get install virtualbox-guest-additions-iso
 sudo apt-get install virtualbox-guest-utils
 ```
 - Select a shared folder where the Spunk download was placed
+  - Click 'devices' at the top left of the VirtualBox ui
+  - Click 'shared folders', then 'shared folder settings'
+  - Set the folder path to the Project folder path
+  - Set it to read-only, auto mount, and make permanent
 - Reboot machine to finalize installations
+  ```bash
+  sudo reboot
+  ``` 
 - Add user to group 'vboxsf' by running:
 ```bash
 sudo adduser <user> vboxsf
 ```
 - Create a directory named 'share'
-- Mounte shared folder to directory 'share' by running:
+- Mount shared folder to directory 'share' by running:
 ```bash
 sudo mount -t vboxsf -o uid=1000,gid=1000 <shared folder name> share/
 ```
+  - May need to log out and log back in, if having trouble
 - Install Splunk by changing to the 'share' directory and running:
 ```bash
 sudo dpkg -i <splunk install file name>
 ```
 - Switch to user 'splunk' and run the splunk installer
-- Once installed, enable splunk to start on boot and switch to user 'splunk' by running:
+  ```bash
+  sudo -u splunk bash
+  cd bin
+  ./splunk start
+  ``` 
+- Once installed, switch back to other user and enable splunk to start on boot and to switch to user 'splunk' by running:
 ```bash
 sudo ./splunk enable boot-start -user splunk
 ```
 
 ## Windows 10 Target Machine
 
+- Install Windows 10 Pro on a VM using VirtualBox
 - Change pc name to 'target-PC' in settings
 - Change IP address to '192.168.10.100', default gateway to '192.168.10.1', and DNS server to '8.8.8.8'
 
-### Installing Splunk Universal Forwarder and Sysmon
+### Installing Splunk Universal Forwarder and Sysmon on Windows 10 Target Machine
 
 - Install Splunk Universal Forwarder and set the receiving index to the Splunk Server (192.168.10.10) on port 9997
 - Install sysmon with the config file from 'olaf' on Github by downloading both files and running this on PowerShell:
