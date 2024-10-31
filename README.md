@@ -19,15 +19,37 @@ The goal of this project is to gain hands-on experience with a SIEM in an Active
 - Change PC name to 'ADDC01' in settings
 - Change IP address to '192.168.10.7', default gateway to '192.168.10.1', and DNS server to '8.8.8.8'
 
+### Adding Active Directory
+
+- Go to Server Manager and add Active Directory Domain Services
+- Promote server to a domain controller
+  - Click on the flag icon next to 'Manage'
+  - Add a new forest with a root domain name '{rootDomain}.local'
+  - Create a password
+  - Install configuration and restart the server
+    - Keep clicking next
+  - Go to Server Manager and add new organizational units 'IT' and 'HR' within the domain
+    - Tools > Active Directory Users and Computers
+    - Right click the domain '{rootDomain}.local', and add new Organizational Units
+  - Add a user into each OU
+    - Right click the OU you want to add the user to 
+
 ### Installing Splunk Universal Forwarder and Sysmon on Windows 10 Server
 
-- Install Splunk Universal Forwarder and set the receiving index to the Splunk Server (192.168.10.10) on port 9997
-- Install sysmon with the config file from 'olaf' on Github by downloading both files and running this on PowerShell:
+- Install Splunk Universal Forwarder on the Splunk website and set the receiving index to the Splunk Server (192.168.10.10) on port 9997
+    - When you start the launcher, it will ask for the 'Receiving indexer'; that's where you'll type in the IP address and port number
+- Install sysmon with the config file from 'olaf' on Github by downloading both files and running this in PowerShell:
 ```bash
 cd C:<symon install path>
 .\Symon64.exe -i ..\sysmonconfig.xml
 ```
-- Create a file named 'inputs.conf' and input the following information to ensure data is being sent to the correct places:
+- Create a file named 'inputs.conf' in the /program files/SplunkUniversalForwarder/etc/system/local directory and input the following information to ensure data is being sent to the correct places:
+    - This tells the Splunk Forwarder to forward those events to the Splunk server  
+    - You'll need admin privileges, so open Notepad as administrator and paste it in, then save it to that directory (Change 'save as type' to 'all files')
+    - In the Services app on the Windows machine, double click the SplunkForwarder service, and go to the 'Log On' tab
+        - Change it to log on as 'Local System account', this is because it may not be able to collect logs due to permissions if logged in as the other account
+    - Restart the SplunkForwarder service
+    
 ```bash
 [WinEventLog://Application]
 
@@ -57,20 +79,11 @@ renderXml = true
 
 source = XmlWinEventLog:Microsoft-Windows-Sysmon/Operational
 ``` 
-- Change the SplunkForwarder service to login as the system account in the Services application and restarted the service
-- Go to the splunk:8000 web ui and create an index named 'endpoint', per the inputs.conf file
+- Go to the splunk:8000 web ui and create an index named 'endpoint' per the inputs.conf file
+    - Settings, then 'Indexes', click 'New Index' and add 'endpoint'
 - Add a new receiving port of 9997 on the splunk web ui to receive data
-- Verify that Splunk Web is now receiving data on the 'endpoint' indexer
-
-### Adding Active Directory
-
-- Go to Server Manager and add Active Directory Domain Services
-- Promote server to a domain controller
-  - Adde a new forest with a root domain name '{rootDomain}.local
-  - Create a password
-  - Install configuration and restarted the server
-  - Go to Server Manager and add new organizational units 'IT' and 'HR' within the domain
-  - Add a user into each OU 
+    - Settings, 'Forwarding and receiving', 'Configure receiving', click 'New Receiving Port' and add port 9997
+- Go to 'Search and Reporting' under Apps, and check to see if events are being forwarded by typing 'index=endpoint'
 
 ## Splunk Server
 
@@ -140,18 +153,37 @@ sudo ./splunk enable boot-start -user splunk
 ## Windows 10 Target Machine
 
 - Install Windows 10 Pro on a VM using VirtualBox
-- Change pc name to 'target-PC' in settings
-- Change IP address to '192.168.10.100', default gateway to '192.168.10.1', and DNS server to '8.8.8.8'
+- Change PC name to 'target-PC' in settings
+- Restart PC
+- Change IPv4 address to '192.168.10.100', Subnet mask to '255.255.255.0', default gateway to '192.168.10.1', and DNS server to '8.8.8.8'
+- Once Windows server Active Directory is configured, change the DNS server to '192.168.10.7', the Windows server address
+
+### Adding PC to Active Directory Domain
+
+- Type in 'This PC' in the Windows search bar and click 'properties'
+  - Scroll down to 'Advanced System Settings'
+  - Go to 'Computer Name', change at the bottom, and Add the domain under 'Member of'
+  - Type in the administrator credentials (in a real-world environment, a new group would be created)
+  - Restart PC
+- Log in as the HR user to ensure everything is working properly
+  - On the initial login screen, click Other User and type in the HR user credentials
 
 ### Installing Splunk Universal Forwarder and Sysmon on Windows 10 Target Machine
 
-- Install Splunk Universal Forwarder and set the receiving index to the Splunk Server (192.168.10.10) on port 9997
-- Install sysmon with the config file from 'olaf' on Github by downloading both files and running this on PowerShell:
+- Install Splunk Universal Forwarder on the Splunk website and set the receiving index to the Splunk Server (192.168.10.10) on port 9997
+    - When you start the launcher, it will ask for the 'Receiving indexer'; that's where you'll type in the IP address and port number
+- Install sysmon with the config file from 'olaf' on Github by downloading both files and running this in PowerShell:
 ```bash
 cd C:<symon install path>
 .\Symon64.exe -i ..\sysmonconfig.xml
 ```
-- Create a file named 'inputs.conf' and inputt the following information to ensure data was being sent to the correct places:
+- Create a file named 'inputs.conf' in the /program files/SplunkUniversalForwarder/etc/system/local directory and input the following information to ensure data is being sent to the correct places:
+    - This tells the Splunk Forwarder to forward those events to the Splunk server  
+    - You'll need admin privileges, so open Notepad as administrator and paste it in, then save it to that directory (Change 'save as type' to 'all files')
+    - In the Services app on the Windows machine, double click the SplunkForwarder service, and go to the 'Log On' tab
+        - Change it to log on as 'Local System account', this is because it may not be able to collect logs due to permissions if logged in as the other account
+    - Restart the SplunkForwarder service
+    
 ```bash
 [WinEventLog://Application]
 
@@ -181,14 +213,16 @@ renderXml = true
 
 source = XmlWinEventLog:Microsoft-Windows-Sysmon/Operational
 ``` 
-- Change the SplunkForwarder service to login as the system account in the Services application and restarted the service
-- Go to the splunk:8000 web ui and created an index named 'endpoint' per the inputs.conf file
-- Added a new receiving port of 9997 on the splunk web ui to receive data
+- Go to the splunk:8000 web ui and create an index named 'endpoint' per the inputs.conf file
+    - Settings, then 'Indexes', click 'New Index' and add 'endpoint'
+- Add a new receiving port of 9997 on the splunk web ui to receive data
+    - Settings, 'Forwarding and receiving', 'Configure receiving', click 'New Receiving Port' and add port 9997
+- Go to 'Search and Reporting' under Apps, and check to see if events are being forwarded by typing 'index=endpoint'
 
 ### Troubleshooting Splunk Forwarder
 
 - Check to see if any data was being received on the 'endpoint' indexer
-  - Verify all configuration files were correct
+  - Verify all configuration files are correct
   - Create an outbound rule on the firewall to allow connections through port 9997
   - Splunk Web should now be receiving data on the 'endpoint' indexer
 
@@ -196,25 +230,26 @@ source = XmlWinEventLog:Microsoft-Windows-Sysmon/Operational
 
 - Enable RDP and add both of the users that were created in Active Directory
   - This is for a later step using 'crowbar' in Kali Linux
+  - Type 'This PC' in the Windows search bar, click properties, scroll down and click 'Advanced System Settings' and login as the Admin account
+  - Click 'Remote' tab, and allow remote connections, then click 'Select Users'
+    - Add the two users created earlier, click 'Check names' to autofill once the username is typed out
 - In order for Atomic Red Team to work, add an exclusion on Microsoft Defender Antivirus for the C:\ drive
 - To install Atomic Red Team, input the following in Powershell as Administrator:
 ```bash
 IEX (IWR 'https://raw.githubusercontent.com/redcanaryco/invoke-atomicredteam/master/install-atomicredteam.ps1' -UseBasicParsing);
 Install-AtomicRedTeam -getAtomics
 ```
-- Then, create a local account using Atomic Red Team associated with the MITRE ATT&CK id 'T1136.001'
-  - This create a user called 'NewLocalUser'
+- Then, create a local account using Atomic Red Team associated with the MITRE ATT&CK id 'T1136.001' in PowerShell
+  - This creates a user called 'NewLocalUser'
+  ```bash
+  Invoke-AtomicTest T1136.001
+  ```
 - Go to the Splunk Web UI to see if an event showed up for 'NewLocalUser', and after waiting a few minutes a few events should show up
 - Run another technique using Atomic Red Team with the id 'T1059.001' to execute a PowerShell command
+  ```bash
+  Invoke-AtomicTest T1059.001
+  ``` 
 - This should also show up in the Splunk Web UI
- 
-### Adding PC to Active Directory Domain
-
-- Add PC to the active directory domain '{domainName}.local', but it can't communicate with the Active Directory Server yet
-  - Change the DNS server to point to the Active Directory Server IP address
-  - PC can now be added to the domain
-  - Restart PC
-- Log in as the HR user to ensure everything is working properly
  
 ## Kali Linux
 
@@ -241,7 +276,7 @@ crowbar -b rdp -u tsmith -C passwords.txt -s 192.168.10.100/32
 - This specifies to use rdp as the targets service, the username being tsmith, the wordlist being passwords.txt, and the target IP address as 192.168.10.100/32 (/32 to indicate a single target IP address)
   - Since the actual password was added to the txt file, the attack is successful
 - To check the event in splunk, go over to the Splunk web interface and check for events tying to 'tsmith'
-  - `"index='endpoint' tsmith"`
+  - 'index=endpoint tsmith'
   - A number of events should show up, including 20 for event code 4625, which indicates the account failed to log on 20 times
   - All events with event code 4625 happened at the exact same time
   - Should also see the source network address as the kali linux machine that initiated the attack
